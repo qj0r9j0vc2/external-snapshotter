@@ -19,6 +19,7 @@ package common_controller
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1088,24 +1089,41 @@ func (ctrl *csiSnapshotCommonController) bindandUpdateVolumeSnapshot(snapshotCon
 func (ctrl *csiSnapshotCommonController) needsUpdateSnapshotStatus(snapshot *crdv1.VolumeSnapshot, content *crdv1.VolumeSnapshotContent) bool {
 	klog.V(5).Infof("needsUpdateSnapshotStatus[%s]", utils.SnapshotKey(snapshot))
 
+	klog.V(5).Infof("[DEBUGGING]: snapshot.Status, content.Status = %v, %v", snapshot.Status, content.Status)
 	if snapshot.Status == nil && content.Status != nil {
 		return true
 	}
+	klog.V(5).Infof("[DEBUGGING]: content.Status = %v", content.Status)
 	if content.Status == nil {
 		return false
 	}
+	klog.V(5).Infof("[DEBUGGING]: snapshot.Status.BoundVolumeSnapshotContentName = %v", snapshot.Status.BoundVolumeSnapshotContentName)
 	if snapshot.Status.BoundVolumeSnapshotContentName == nil {
 		return true
 	}
+	klog.V(5).Infof("[DEBUGGING]: snapshot.Status.CreationTime, content.Status.CreationTime = %v, %v", snapshot.Status.CreationTime, content.Status.CreationTime)
 	if snapshot.Status.CreationTime == nil && content.Status.CreationTime != nil {
 		return true
 	}
+
+	klog.V(5).Infof("[DEBUGGING]: snapshot.Status.ReadyToUse, content.Status.ReadyToUse = %v, %v", snapshot.Status.ReadyToUse, content.Status.ReadyToUse)
 	if snapshot.Status.ReadyToUse == nil && content.Status.ReadyToUse != nil {
 		return true
 	}
+
+	klog.V(5).Infof("[DEBUGGING]: snapshot.Status.ReadyToUse, content.Status.ReadyToUse = %d, %d", *snapshot.Status.ReadyToUse, *content.Status.ReadyToUse)
 	if snapshot.Status.ReadyToUse != nil && content.Status.ReadyToUse != nil && snapshot.Status.ReadyToUse != content.Status.ReadyToUse {
 		return true
 	}
+
+	var rsMsg string
+	if content.Status.RestoreSize == nil {
+		rsMsg = "<nil>"
+	} else {
+		rsMsg = strconv.FormatInt(*content.Status.RestoreSize, 10)
+	}
+	klog.V(5).Infof("[DEBUGGING]: snapshot.Status.RestoreSize, content.Status.RestoreSize = %v, %v", snapshot.Status.RestoreSize.String(), rsMsg)
+
 	if snapshot.Status.RestoreSize == nil && content.Status.RestoreSize != nil {
 		return true
 	}
